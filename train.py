@@ -12,6 +12,8 @@ import numpy as np
 import random
 import os, sys
 import torch
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
 from random import randint
 from utils.loss_utils import l1_loss, ssim, l2_loss, lpips_loss
 from gaussian_renderer import render, network_gui
