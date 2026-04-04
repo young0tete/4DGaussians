@@ -259,7 +259,6 @@ class Neural3D_NDC_Dataset(Dataset):
 
         self.load_meta()
         print(f"meta data loaded, total image:{len(self)}")
-        self._preload_images()
 
     def load_meta(self):
         """
@@ -377,24 +376,13 @@ class Neural3D_NDC_Dataset(Dataset):
                 #     video_data_save[count] = img.permute(1,2,0)
                 #     count += 1
         return image_paths, image_poses, image_times, N_cams, N_time
-    def _preload_images(self):
-        W, H = self.img_wh
-        n = len(self.image_paths)
-        print(f"Preloading {n} images into RAM ({n * W * H * 3 / 1024**3:.1f} GB) ...")
-        self._images = np.empty((n, H, W, 3), dtype=np.uint8)
-        for i, path in enumerate(tqdm(self.image_paths, desc="preload")):
-            img = Image.open(path)
-            if img.size != (W, H):
-                img = img.resize((W, H), Image.LANCZOS)
-            self._images[i] = np.array(img)
-        print("Preload done.")
-
     def __len__(self):
         return len(self.image_paths)
+    def __getitem__(self,index):
+        img = Image.open(self.image_paths[index])
+        img = img.resize(self.img_wh, Image.LANCZOS)
 
-    def __getitem__(self, index):
-        img = torch.from_numpy(self._images[index]).float() / 255.0
-        img = img.permute(2, 0, 1)  # HWC -> CHW
+        img = self.transform(img)
         return img, self.image_poses[index], self.image_times[index]
     def load_pose(self,index):
         return self.image_poses[index]
